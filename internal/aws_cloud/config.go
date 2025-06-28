@@ -62,7 +62,7 @@ func getConfig(region string, cfg_files []string, crd_files []string) (aws.Confi
 	return cfg, err
 }
 
-// this assumes the parameter is in the format of service::id::region, while region is optional
+// this assumes the parameter is in the format of service::id::region, while region is optional.
 func ParseStr(param string) ConfigStruct {
 	arr := strings.Split(param, "::")
 
