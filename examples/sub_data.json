@@ -1,0 +1,20 @@
+{
+    "time_zone": "America/New_York",
+    "nested": {
+        "key": {
+            "other": {
+                "stuff": "ssm::/ssm_name/id",
+                "new": "ssm::/ssm_name/dev/databucket/eu-central-1::eu-central-1"
+            }
+        }
+    },
+    "url": {
+        "host": "https://api.google.com",
+        "path": "/v1",
+        "query": {
+            "key": "value"
+        }
+    },
+    "bool": true,
+    "int": 1
+}

@@ -1,0 +1,41 @@
+Terraform will perform the following actions:
+
+  # awsutils_cloudfront_invalidation.this will be created
+  + resource "awsutils_cloudfront_invalidation" "this" {
+      + distribution_id = "EABCDEFGHI"
+      + paths           = [
+          + "/*",
+        ]
+      + trigger         = (known after apply)
+      + validation_id   = (known after apply)
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + config = jsonencode(
+        {
+          + bool      = true
+          + int       = 1
+          + nested    = {
+              + key = {
+                  + other = {
+                      + new   = "ssm::/terraform/dev/databucket::eu-central-1"
+                      + stuff = [
+                          + "us-east-1_g1234567",
+                          + "https://google.com",
+                          + "ssm_string_list_value",
+                        ]
+                    }
+                }
+            }
+          + time_zone = "America/New_York"
+          + url       = {
+              + host  = "https://api.google.com"
+              + path  = "/v1"
+              + query = {
+                  + key = "value"
+                }
+            }
+        }
+    )
