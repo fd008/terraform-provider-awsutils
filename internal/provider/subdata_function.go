@@ -48,7 +48,7 @@ func (f *AwsVarFunction) Definition(ctx context.Context, req function.Definition
 	}
 }
 
-// a function that iterates over each key and value recursively of map[string]interface{} and prints them
+// a function that iterates over each key and value recursively of map[string]interface{} and prints them.
 func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{}, error) {
 	for k, v := range m {
 
@@ -106,7 +106,7 @@ func (f *AwsVarFunction) Run(ctx context.Context, req function.RunRequest, resp 
 
 	resp.Error = req.Arguments.Get(ctx, &json_file, &strict)
 
-	// parse the JSON file into a map
+	// parse the JSON file into a map.
 	var jsonMap map[string]interface{}
 
 	err := json.Unmarshal([]byte(json_file), &jsonMap)
@@ -116,7 +116,7 @@ func (f *AwsVarFunction) Run(ctx context.Context, req function.RunRequest, resp 
 		return
 	}
 
-	// traverse the map and replace ssm:: and secret:: references if found
+	// traverse the map and replace ssm:: and secret:: references if found.
 	_, err = traverseMap(jsonMap, strict)
 
 	if err != nil {
@@ -126,7 +126,7 @@ func (f *AwsVarFunction) Run(ctx context.Context, req function.RunRequest, resp 
 		}
 	}
 
-	// convert the map back to a JSON string
+	// convert the map back to a JSON string.
 	var json_str []byte
 	json_str, err = json.Marshal(jsonMap)
 

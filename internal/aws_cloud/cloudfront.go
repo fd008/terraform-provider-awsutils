@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 )
 
-// given a distribution ID and paths, invalidate the cache
+// given a distribution ID and paths, invalidate the cache.
 func InvalidateCache(cfg aws.Config, distributionID string, paths []string) (*cloudfront.CreateInvalidationOutput, error) {
 
 	svc := cloudfront.NewFromConfig(cfg)
@@ -29,7 +29,7 @@ func InvalidateCache(cfg aws.Config, distributionID string, paths []string) (*cl
 		},
 	}
 
-	// create the invalidation
+	// create the invalidation.
 	return svc.CreateInvalidation(context.TODO(), input)
 }
 
@@ -38,11 +38,11 @@ func GetDistribution(cfg aws.Config, distributionID string) (*cloudfront.GetDist
 
 	svc := cloudfront.NewFromConfig(cfg)
 
-	// create the input
+	// create the input.
 	input := &cloudfront.GetDistributionInput{
 		Id: &distributionID,
 	}
 
-	// get the distribution
+	// get the distribution.
 	return svc.GetDistribution(context.TODO(), input)
 }

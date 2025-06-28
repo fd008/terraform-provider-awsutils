@@ -28,7 +28,7 @@ func getParameter(param string, region string) (*ssm.GetParameterOutput, error) 
 
 }
 
-// fetchSSMParameter fetches a parameter from AWS SSM Parameter Store by name
+// fetchSSMParameter fetches a parameter from AWS SSM Parameter Store by name.
 func FetchSSMParameter(paramName string, region string) (interface{}, error) {
 	result, err := getParameter(paramName, region)
 
@@ -36,7 +36,7 @@ func FetchSSMParameter(paramName string, region string) (interface{}, error) {
 		return "", fmt.Errorf("unable to retrieve parameter, %v", err)
 	}
 
-	// if the parameter is a StringList, split it by comma and return it as a slice
+	// if the parameter is a StringList, split it by comma and return it as a slice.
 	if result.Parameter.Type == "StringList" {
 		return strings.Split(aws.ToString(result.Parameter.Value), ","), nil
 	}
