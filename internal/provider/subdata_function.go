@@ -55,44 +55,65 @@ func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{},
 		switch valType := v.(type) {
 		case string:
 			fmt.Println(k, v)
-			if strings.Contains(v.(string), "::") {
-				configVal := awscloud.ParseStr(v.(string))
 
-				switch configVal.Service {
-				case "ssm":
-					param, err := awscloud.FetchSSMParameter(configVal.ID, configVal.Region)
-					if err != nil || param == "" {
-						if strict {
-							return nil, fmt.Errorf("SSM parameter not found")
+			valStr, ok := v.(string)
+			if !ok {
+				if strict {
+					return nil, fmt.Errorf("value for key %s is not a string", k)
+				}
+
+				if strings.Contains(valStr, "::") {
+					configVal := awscloud.ParseStr(valStr)
+
+					switch configVal.Service {
+					case "ssm":
+						param, err := awscloud.FetchSSMParameter(configVal.ID, configVal.Region)
+						if err != nil || param == "" {
+							if strict {
+								return nil, fmt.Errorf("SSM parameter not found")
+							}
 						}
-					}
 
-					if param != "" {
-						m[k] = param
-					}
-
-				case "secret":
-					secret, err := awscloud.FetchSecret(configVal.ID, configVal.Region)
-					if err != nil || secret == "" {
-
-						if strict {
-							return nil, fmt.Errorf("secret not found")
+						if param != "" {
+							m[k] = param
 						}
+
+					case "secret":
+						secret, err := awscloud.FetchSecret(configVal.ID, configVal.Region)
+						if err != nil || secret == "" {
+
+							if strict {
+								return nil, fmt.Errorf("secret not found")
+							}
+						}
+
+						if secret != "" {
+							m[k] = secret
+						}
+
+					default:
+						fmt.Println(k, v)
+
 					}
+				}
+			}
+		case map[string]interface{}:
+			fmt.Println(k)
+			vMap, ok := v.(map[string]interface{})
 
-					if secret != "" {
-						m[k] = secret
-					}
-
-				default:
-					fmt.Println(k, v)
-
+			if !ok {
+				if strict {
+					return nil, fmt.Errorf("value for key %s is not a map", k)
 				}
 			}
 
-		case map[string]interface{}:
-			fmt.Println(k)
-			traverseMap(v.(map[string]interface{}), strict)
+			_, terr := traverseMap(vMap, strict)
+			if terr != nil {
+				if strict {
+					return nil, fmt.Errorf("error traversing map: %v", terr)
+				}
+			}
+
 		default:
 			fmt.Println(k, v, valType)
 		}
