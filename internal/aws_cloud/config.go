@@ -99,7 +99,7 @@ func ParseStr(param string) ConfigStruct {
 	}
 }
 
-// get caller identity
+// get caller identity.
 func GetCallerIdentity(cfg aws.Config) (*sts.GetCallerIdentityOutput, error) {
 	svc := sts.NewFromConfig(cfg)
 	return svc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})

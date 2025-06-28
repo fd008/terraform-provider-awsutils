@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-// fetchSecret fetches a secret from AWS Secrets Manager by ID
+// fetchSecret fetches a secret from AWS Secrets Manager by ID.
 func FetchSecret(secretID string, region string) (string, error) {
 	// Create a Secrets Manager client
 	cfg, err := getConfig(region, nil, nil)

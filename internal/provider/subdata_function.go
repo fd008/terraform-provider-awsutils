@@ -49,6 +49,7 @@ func (f *AwsVarFunction) Definition(ctx context.Context, req function.Definition
 }
 
 // a function that iterates over each key and value recursively of map[string]interface{} and prints them.
+//nolint:errcheck
 func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{}, error) {
 	for k, v := range m {
 
@@ -106,7 +107,7 @@ func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{},
 					return nil, fmt.Errorf("value for key %s is not a map", k)
 				}
 			}
-
+			//nolint:errcheck
 			_, terr := traverseMap(vMap, strict)
 			if terr != nil {
 				if strict {
@@ -138,6 +139,7 @@ func (f *AwsVarFunction) Run(ctx context.Context, req function.RunRequest, resp 
 	}
 
 	// traverse the map and replace ssm:: and secret:: references if found.
+	//nolint:errcheck
 	_, err = traverseMap(jsonMap, strict)
 
 	if err != nil {

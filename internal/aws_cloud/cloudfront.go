@@ -33,7 +33,7 @@ func InvalidateCache(cfg aws.Config, distributionID string, paths []string) (*cl
 	return svc.CreateInvalidation(context.TODO(), input)
 }
 
-// get the dsitribtion by ID
+// get the dsitribtion by ID.
 func GetDistribution(cfg aws.Config, distributionID string) (*cloudfront.GetDistributionOutput, error) {
 
 	svc := cloudfront.NewFromConfig(cfg)
