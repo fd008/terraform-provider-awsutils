@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright (c) github.com/fd008 - All rights reserved
 // SPDX-License-Identifier: MPL-2.0
 
 package main
