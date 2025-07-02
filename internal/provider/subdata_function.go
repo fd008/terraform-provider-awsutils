@@ -63,40 +63,39 @@ func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{},
 				if strict {
 					return nil, fmt.Errorf("value for key %s is not a string", k)
 				}
+			}
+			if strings.Contains(valStr, "::") {
+				configVal := awscloud.ParseStr(valStr)
 
-				if strings.Contains(valStr, "::") {
-					configVal := awscloud.ParseStr(valStr)
-
-					switch configVal.Service {
-					case "ssm":
-						param, err := awscloud.FetchSSMParameter(configVal.ID, configVal.Region)
-						if err != nil || param == "" {
-							if strict {
-								return nil, fmt.Errorf("SSM parameter not found")
-							}
+				switch configVal.Service {
+				case "ssm":
+					param, err := awscloud.FetchSSMParameter(configVal.ID, configVal.Region)
+					if err != nil || param == "" {
+						if strict {
+							return nil, fmt.Errorf("SSM parameter not found")
 						}
-
-						if param != "" {
-							m[k] = param
-						}
-
-					case "secret":
-						secret, err := awscloud.FetchSecret(configVal.ID, configVal.Region)
-						if err != nil || secret == "" {
-
-							if strict {
-								return nil, fmt.Errorf("secret not found")
-							}
-						}
-
-						if secret != "" {
-							m[k] = secret
-						}
-
-					default:
-						fmt.Println(k, v)
-
 					}
+
+					if param != "" {
+						m[k] = param
+					}
+
+				case "secret":
+					secret, err := awscloud.FetchSecret(configVal.ID, configVal.Region)
+					if err != nil || secret == "" {
+
+						if strict {
+							return nil, fmt.Errorf("secret not found")
+						}
+					}
+
+					if secret != "" {
+						m[k] = secret
+					}
+
+				default:
+					fmt.Println(k, v)
+
 				}
 			}
 		case map[string]interface{}:

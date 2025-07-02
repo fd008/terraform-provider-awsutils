@@ -35,7 +35,7 @@ resource "awsutils_cloudfront_invalidation" "this" {
 # }
 
 output "config" {
-  value = provider::awsutils::sub_data(file("./sub_data.json"), true)
+  value = provider::awsutils::sub_data(file("./sub_data.json"), false)
 }
 
 # output "invalidation" {
