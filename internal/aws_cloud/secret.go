@@ -12,9 +12,9 @@ import (
 )
 
 // fetchSecret fetches a secret from AWS Secrets Manager by ID.
-func FetchSecret(secretID string, region string) (string, error) {
+func FetchSecret(secretID string, region *string) (interface{}, error) {
 	// Create a Secrets Manager client
-	cfg, err := getConfig(region, nil, nil)
+	cfg, err := GetConfig(region, nil, nil)
 	if err != nil {
 		return "", fmt.Errorf("AWS Credentials Error, %v", err)
 	}
@@ -28,5 +28,5 @@ func FetchSecret(secretID string, region string) (string, error) {
 		return "", fmt.Errorf("unable to retrieve secret, %v", err)
 	}
 
-	return aws.ToString(result.SecretString), nil
+	return StringOrMap(aws.ToString(result.SecretString)), nil
 }

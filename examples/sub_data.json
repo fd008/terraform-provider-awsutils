@@ -3,8 +3,8 @@
     "nested": {
         "key": {
             "other": {
-                "stuff": "ssm::/ssm_name/id",
-                "new": "ssm::/ssm_name/dev/databucket/eu-central-1::eu-central-1"
+                "stuff": "ssm::/dh/cf/info",
+                "new": "ssm::/org/member/local_sns_arn::eu-central-1"
             }
         }
     },
@@ -13,6 +13,9 @@
         "path": "/v1",
         "query": {
             "key": "value"
+        },
+        "layer7": {
+            "token": "secret::layer7/test123"
         }
     },
     "bool": true,

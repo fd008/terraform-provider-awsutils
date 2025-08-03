@@ -12,8 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
-func getParameter(param string, region string) (*ssm.GetParameterOutput, error) {
-	cfg, err := getConfig(region, nil, nil)
+func getParameter(param string, region *string) (*ssm.GetParameterOutput, error) {
+	cfg, err := GetConfig(region, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func getParameter(param string, region string) (*ssm.GetParameterOutput, error) 
 }
 
 // fetchSSMParameter fetches a parameter from AWS SSM Parameter Store by name.
-func FetchSSMParameter(paramName string, region string) (interface{}, error) {
+func FetchSSMParameter(paramName string, region *string) (interface{}, error) {
 	result, err := getParameter(paramName, region)
 
 	if err != nil {
@@ -41,5 +41,5 @@ func FetchSSMParameter(paramName string, region string) (interface{}, error) {
 		return strings.Split(aws.ToString(result.Parameter.Value), ","), nil
 	}
 
-	return aws.ToString(result.Parameter.Value), nil
+	return StringOrMap(aws.ToString(result.Parameter.Value)), nil
 }

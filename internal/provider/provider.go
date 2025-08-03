@@ -5,7 +5,7 @@ package provider
 
 import (
 	"context"
-	"net/http"
+	awscloud "terraform-provider-awsutils/internal/aws_cloud"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
@@ -40,7 +40,7 @@ func (p *AWSUtilsProvider) Schema(ctx context.Context, req provider.SchemaReques
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"region": schema.StringAttribute{
-				Description: "The region to use for AWS requests.",
+				Description: "The region to use for AWS requests. If not set, defaults to us-east-1",
 				Optional:    true,
 			},
 			"shared_config_files": schema.ListAttribute{
@@ -66,13 +66,18 @@ func (p *AWSUtilsProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
+	cfg, err := awscloud.GetConfig(data.Region, data.SharedConfigFiles, data.SharedCredentialsFiles)
 
-	// Example client configuration for data sources and resources
-	client := http.DefaultClient
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error configuring AWS Utils provider",
+			"Unable to create AWS configuration: "+err.Error(),
+		)
+		return
+	}
+
+	resp.DataSourceData = cfg
+	resp.ResourceData = cfg
 }
 
 func (p *AWSUtilsProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -92,6 +97,7 @@ func (p *AWSUtilsProvider) DataSources(ctx context.Context) []func() datasource.
 func (p *AWSUtilsProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
 		NewAwsVarFunction,
+		ShallowListFunction,
 	}
 }
 

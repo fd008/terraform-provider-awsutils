@@ -5,6 +5,7 @@ package awscloud
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"strings"
 
@@ -41,24 +42,25 @@ func getRegion(region *string) string {
 	return "us-est-1" // Fallback to a default region if no region is provided
 }
 
-func getConfig(region string, cfg_files []string, crd_files []string) (aws.Config, error) {
+func GetConfig(region *string, cfg_files []string, crd_files []string) (aws.Config, error) {
 	// Load the Shared AWS Configuration (~/.aws/config)
 	// https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	// if region is not provided, try to get it from the environment variable or the default region or config region
-	if region == "" {
-		region = getRegion(&cfg.Region)
+	if region == nil || *region == "" {
+		regionValue := getRegion(&cfg.Region)
+		region = &regionValue
 	}
 
 	if len(cfg_files) > 0 {
-		return config.LoadDefaultConfig(context.Background(), config.WithSharedConfigFiles(cfg_files), config.WithRegion(region))
+		return config.LoadDefaultConfig(context.Background(), config.WithSharedConfigFiles(cfg_files), config.WithRegion(*region))
 	}
 
 	if len(crd_files) > 0 {
-		return config.LoadDefaultConfig(context.Background(), config.WithSharedCredentialsFiles(crd_files), config.WithRegion(region))
+		return config.LoadDefaultConfig(context.Background(), config.WithSharedCredentialsFiles(crd_files), config.WithRegion(*region))
 	}
 
-	cfg.Region = region
+	cfg.Region = *region
 	return cfg, err
 }
 
@@ -103,5 +105,22 @@ func ParseStr(param string) ConfigStruct {
 func GetCallerIdentity(cfg aws.Config) (*sts.GetCallerIdentityOutput, error) {
 	svc := sts.NewFromConfig(cfg)
 	return svc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+
+}
+
+func StringOrMap(s string) interface{} {
+
+	isMap := (strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}")) || (strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]"))
+
+	if isMap {
+		var m map[string]interface{}
+		err := json.Unmarshal([]byte(s), &m)
+		if err != nil {
+			return nil
+		}
+		return m
+	}
+
+	return s
 
 }

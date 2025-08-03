@@ -17,6 +17,6 @@ description: |-
 
 ### Optional
 
-- `region` (String) The region to use for AWS requests.
+- `region` (String) The region to use for AWS requests. If not set, defaults to us-east-1
 - `shared_config_files` (List of String) Path to shared config file. If not set, defaults to ~/.aws/config.
 - `shared_credentials_files` (List of String) List of paths to shared credentials files. If not set, defaults to [~/.aws/credentials].

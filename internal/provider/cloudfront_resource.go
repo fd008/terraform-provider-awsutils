@@ -1,4 +1,4 @@
-// Copyright (c) https://github.com/fd008, all rights reserved.
+// Copyright (c) Fuadul Hasan, all rights reserved.
 // SPDX-License-Identifier: MPL-2.0
 
 package provider
@@ -9,14 +9,11 @@ import (
 	awscloud "terraform-provider-awsutils/internal/aws_cloud"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -58,9 +55,9 @@ func (r *CfResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			"distribution_id": schema.StringAttribute{
 				Required:            true,
 				MarkdownDescription: "Cloudfront distribution ID",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+				// PlanModifiers: []planmodifier.String{
+				// 	stringplanmodifier.RequiresReplaceIfConfigured(),
+				// },
 			},
 			"paths": schema.ListAttribute{
 				MarkdownDescription: "Cache invalidation paths - defaults to `/*`",
@@ -75,16 +72,16 @@ func (r *CfResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 					),
 				),
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
-				},
+				// PlanModifiers: []planmodifier.List{
+				// 	listplanmodifier.RequiresReplaceIfConfigured(),
+				// },
 			},
 			"invalidation_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Cloudfront cache invalidation ID",
 				PlanModifiers: []planmodifier.String{
-					// stringplanmodifier.UseStateForUnknown(),
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplaceIfConfigured(),
 				},
 			},
 			// "status": schema.StringAttribute{
@@ -99,6 +96,7 @@ func (r *CfResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Optional:            true,
 				MarkdownDescription: "Trigger cache invalidation. Setting unique value each time will trigger a cache invalidation on apply",
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 				// Default:             stringdefault.StaticString(time.Now().Format(time.RFC3339)),
@@ -108,50 +106,36 @@ func (r *CfResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 
 }
 
-func (p *CfResource) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data CfResource
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	// if resp.Diagnostics.HasError() {
-	// 	return
-	// }
-
-	// // Prepare AWS config options
-	opts := []func(*config.LoadOptions) error{}
-
-	// if data.Region != nil && *data.Region != "" {
-	// 	opts = append(opts, config.WithRegion(*data.Region))
-	// }
-	// if len(data.SharedConfigFiles) > 0 {
-	// 	opts = append(opts, config.WithSharedConfigFiles(data.SharedConfigFiles))
-	// }
-	// if len(data.SharedCredentialsFiles) > 0 {
-	// 	opts = append(opts, config.WithSharedCredentialsFiles(data.SharedCredentialsFiles))
-	// }
-
-	awsCfg, err := config.LoadDefaultConfig(ctx, opts...)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to load AWS config",
-			fmt.Sprintf("Error loading AWS config: %s", err),
-		)
+func (r *CfResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// provider configuration
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
 		return
 	}
 
-	resp.DataSourceData = awsCfg
-	resp.ResourceData = awsCfg
+	cfg, ok := req.ProviderData.(aws.Config)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *aws.Config, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.cfg = cfg
+
 }
 
 func (r *CfResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// // state
-	// var state CfResourceModel
+	// state
+	var state CfResourceModel
+	resp.State.Get(ctx, &state)
 
-	// resp.State.Get(ctx, &state)
-
-	// if resp.Diagnostics.HasError() {
-	// 	return
-	// }
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// plan
 	var data CfResourceModel
@@ -167,9 +151,9 @@ func (r *CfResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// 	data.Status = state.Status
 	// }
 
-	// if !data.Validation_Id.IsNull() {
-	// 	data.Validation_Id = state.Validation_Id
-	// }
+	if !data.InValidation_Id.IsNull() {
+		data.InValidation_Id = state.InValidation_Id
+	}
 
 	// Convert data.Paths to []string
 	paths := make([]string, 0, len(data.Paths.Elements()))
@@ -178,12 +162,10 @@ func (r *CfResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// resp.Diagnostics.AddError("info", fmt.Sprintf("Invalidating cache info...%T", paths))
 
 	// invalidate the cache
-	// cacheRes, err := (r.cfg, data.Distribution_Id.ValueString(), paths)
-
 	cacheRes, err := awscloud.InvalidateCache(r.cfg, data.Distribution_Id.ValueString(), paths)
 
 	if err != nil {
-		resp.Diagnostics.AddError("Error", fmt.Sprint("Unable to invalidate cache...", err, " | ", data.Distribution_Id.ValueString()))
+		resp.Diagnostics.AddError("Error", fmt.Sprint("Unable to invalidate cache...", err.Error()))
 		// tflog.Error(ctx, fmt.Sprint("Unable to invalidate cache...", err))
 		return
 	}
@@ -220,7 +202,6 @@ func (r *CfResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 }
 
 func (r *CfResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	//no-op
 	// var data CfResourceModel
 
 	// // Read Terraform plan data into the model
@@ -240,7 +221,7 @@ func (r *CfResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	// cacheRes, err := awscloud.InvalidateCache(r.cfg, data.Distribution_Id.ValueString(), paths)
 
 	// if err != nil {
-	// 	resp.Diagnostics.AddError("Error", fmt.Sprint("Unable to invalidate cache...", err, " | ", data.Distribution_Id.ValueString()))
+	// 	resp.Diagnostics.AddError("Error", fmt.Sprint("Unable to invalidate cache...", err, " | ", data.Id.ValueString()))
 	// 	tflog.Error(ctx, fmt.Sprint("Unable to invalidate cache...", err))
 	// 	return
 	// }

@@ -69,7 +69,7 @@ func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{},
 
 				switch configVal.Service {
 				case "ssm":
-					param, err := awscloud.FetchSSMParameter(configVal.ID, configVal.Region)
+					param, err := awscloud.FetchSSMParameter(configVal.ID, &configVal.Region)
 					if err != nil || param == "" {
 						if strict {
 							return nil, fmt.Errorf("SSM parameter not found")
@@ -81,7 +81,7 @@ func traverseMap(m map[string]interface{}, strict bool) (map[string]interface{},
 					}
 
 				case "secret":
-					secret, err := awscloud.FetchSecret(configVal.ID, configVal.Region)
+					secret, err := awscloud.FetchSecret(configVal.ID, &configVal.Region)
 					if err != nil || secret == "" {
 
 						if strict {
