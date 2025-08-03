@@ -91,7 +91,10 @@ func (p *AWSUtilsProvider) EphemeralResources(ctx context.Context) []func() ephe
 }
 
 func (p *AWSUtilsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewKmsPolicyDataSrouce,
+		NewS3PolicyDataSrouce,
+	}
 }
 
 func (p *AWSUtilsProvider) Functions(ctx context.Context) []func() function.Function {
