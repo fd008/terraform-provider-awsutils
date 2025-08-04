@@ -101,6 +101,7 @@ func (p *AWSUtilsProvider) Functions(ctx context.Context) []func() function.Func
 	return []func() function.Function{
 		NewAwsVarFunction,
 		ShallowListFunction,
+		MergePolicyFunction,
 	}
 }
 

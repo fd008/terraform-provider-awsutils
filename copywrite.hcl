@@ -2,11 +2,11 @@
 
 copyright {
   year    = 2025
-  owner   = "Your Company or Your Name"
-  authors = ["Jane Doe", "John Smith"]
+  owner   = "fd008"
+  authors = ["fd008"]
   license = "MIT"
   notice  = <<EOT
-  Copyright (c) 2025 Jane Doe
+  Copyright (c) 2025 fd008
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
