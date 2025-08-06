@@ -10,7 +10,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -107,9 +106,7 @@ func (f *MergePolicy) Definition(ctx context.Context, req function.DefinitionReq
 				Description: "Statements in string format to merge with the existing policy",
 			},
 		},
-		Return: function.ListReturn{
-			ElementType: types.StringType,
-		},
+		Return: function.StringReturn{},
 	}
 }
 
