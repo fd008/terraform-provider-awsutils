@@ -4,7 +4,7 @@ terraform {
   required_providers {
     awsutils = {
       source  = "fd008/awsutils"
-      version = "1.1.0"
+      version = ">= 1.4.1"
     }
   }
 }
@@ -13,8 +13,90 @@ provider "awsutils" {
   # region = "us-east-1"
 }
 
+locals {
+  // Example policies
+  policy1JSON = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::123456789012:user/Alice"
+        },
+        "Action" : [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        "Resource" : ["arn:aws:s3:::my-bucket/*", "arn:aws:s3:::another-bucket/*"]
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "lambda.amazonaws.com"
+        },
+        "Action" : "sqs:SendMessage",
+        "Resource" : "arn:aws:sqs:us-east-1:123456789012:my-queue"
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::123456789012:user/Alice"
+        },
+        "Action" : "s3:GetObject",
+        "Resource" : "arn:aws:s3:::my-bucket/object1"
+      }
+    ]
+  })
+
+  policy2JSON = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::123456789012:user/Alice"
+        },
+        "Action" : "s3:PutObject",
+        "Resource" : ["arn:aws:s3:::my-bucket/*"]
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "lambda.amazonaws.com"
+        },
+        "Action" : "sqs:DeleteMessage",
+        "Resource" : "arn:aws:sqs:us-east-1:123456789012:my-queue"
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ec2.amazonaws.com"
+        },
+        "Action" : "s3:GetBucketLocation",
+        "Resource" : "arn:aws:s3:::*"
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::123456789012:user/Alice"
+        },
+        "Action" : "s3:PutObject",
+        "Resource" : [
+          "arn:aws:s3:::my-bucket/*"
+        ],
+        "Condition" : {
+          "StringEquals" : {
+            "s3:x-amz-acl" : "public-read"
+          }
+        }
+      }
+    ]
+  })
+
+}
+
 resource "awsutils_cloudfront_invalidation" "this" {
-  distribution_id = "ESIMRQH0WC86B"
+  distribution_id = "ES1234789012"
   paths = [
     "/*"
   ]
@@ -61,4 +143,10 @@ output "s3_policy_exists" {
 output "s3_policy_not_exists" {
   value = data.awsutils_s3_policy.not_exists.policy
 
+}
+
+
+
+output "iam_policy_merge" {
+  value = provider::awsutils::merge_policy(local.policy1JSON, local.policy2JSON)
 }

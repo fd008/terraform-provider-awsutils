@@ -1,4 +1,4 @@
-// Copyright (c) Fuadul Hasan, all rights reserved.
+// Copyright (c) https://github.com/fd008, all rights reserved.
 // SPDX-License-Identifier: MPL-2.0
 
 package provider
