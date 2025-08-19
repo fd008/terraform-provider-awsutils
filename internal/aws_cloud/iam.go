@@ -8,13 +8,11 @@ import (
 	"sort"    // For consistent string slice sorting
 )
 
-// Policy represents an AWS IAM policy document
 type Policy struct {
 	Version   string      `json:"Version"`
 	Statement []Statement `json:"Statement"`
 }
 
-// Statement represents a single IAM policy statement
 type Statement struct {
 	Effect    string      `json:"Effect"`
 	Principal Principal   `json:"Principal,omitempty"`
@@ -24,7 +22,6 @@ type Statement struct {
 	Sid       string      `json:"Sid,omitempty"` // Optional statement ID
 }
 
-// Principal represents the entity allowed or denied access
 type Principal struct {
 	AWS           interface{} `json:"AWS,omitempty"` // Can be string or []string
 	Federated     interface{} `json:"Federated,omitempty"`
@@ -52,7 +49,7 @@ func MergePolicies(policy1, policy2 Policy) Policy {
 			}
 		}
 
-		// If no matching principal AND resource were found, add the statement from policy2
+		// If no matching principal AND resource were found, add the statement from policy2.
 		if !foundMatch {
 			mergedPolicy.Statement = append(mergedPolicy.Statement, stmt2)
 		}
@@ -61,7 +58,7 @@ func MergePolicies(policy1, policy2 Policy) Policy {
 	return mergedPolicy
 }
 
-// Helper function to merge string or string slice values (Actions/Resources)
+// Helper function to merge string or string slice values (Actions/Resources).
 func mergeStringOrStringSlice(val1, val2 interface{}) interface{} {
 	// Handle nil values gracefully
 	if val1 == nil && val2 == nil {
@@ -76,11 +73,11 @@ func mergeStringOrStringSlice(val1, val2 interface{}) interface{} {
 
 	var s1, s2 []string
 
-	// Convert interfaces to string slices for processing
+	// Convert interfaces to string slices for processing.
 	s1 = interfaceToStringSlice(val1)
 	s2 = interfaceToStringSlice(val2)
 
-	// Create a map to store unique values
+	// Create a map to store unique values.
 	uniqueValues := make(map[string]bool)
 	for _, s := range s1 {
 		uniqueValues[s] = true
@@ -89,16 +86,16 @@ func mergeStringOrStringSlice(val1, val2 interface{}) interface{} {
 		uniqueValues[s] = true
 	}
 
-	// Convert back to a slice
+	// Convert back to a slice.
 	var merged []string
 	for val := range uniqueValues {
 		merged = append(merged, val)
 	}
 
-	// Sort for consistent output, important for DeepEqual on resources later
+	// Sort for consistent output, important for DeepEqual on resources later.
 	sort.Strings(merged)
 
-	// If there's only one item, return it as a string to match IAM policy JSON format
+	// If there's only one item, return it as a string to match IAM policy JSON format.
 	if len(merged) == 1 {
 		return merged[0]
 	}
@@ -106,7 +103,7 @@ func mergeStringOrStringSlice(val1, val2 interface{}) interface{} {
 	return merged
 }
 
-// Helper to convert interface{} to []string
+// Helper to convert interface{} to []string.
 func interfaceToStringSlice(val interface{}) []string {
 	var result []string
 	if str, ok := val.(string); ok {
@@ -124,18 +121,13 @@ func interfaceToStringSlice(val interface{}) []string {
 }
 
 // mergeConditions merges two IAM condition blocks.
-// This is a simplified example, real-world merging of conditions can be highly complex
-// due to various operators (StringEquals, NumericGreaterThan, ForAllValues:StringEquals, etc.)
-// and nested structures.
-//
-// For this example, we assume conditions are represented as map[string]interface{}
-// and merge them by combining keys. Conflicts will overwrite.
+// Merge them by combining keys. Conflicts will overwrite.
 func mergeConditions(cond1, cond2 interface{}) interface{} {
-	// If both are nil, return nil
+	// If both are nil, return nil.
 	if cond1 == nil && cond2 == nil {
 		return nil
 	}
-	// If one is nil, return the other
+	// If one is nil, return the other.
 	if cond1 == nil {
 		return cond2
 	}
@@ -143,31 +135,25 @@ func mergeConditions(cond1, cond2 interface{}) interface{} {
 		return cond1
 	}
 
-	// Attempt to convert conditions to map[string]interface{}
 	map1, ok1 := cond1.(map[string]interface{})
 	map2, ok2 := cond2.(map[string]interface{})
 
-	// If both are maps, proceed with merging them
+	// If both are maps, proceed with merging them.
 	if ok1 && ok2 {
 		mergedMap := make(map[string]interface{})
-		// Copy all from map1
+		// Copy all from map1.
 		for k, v := range map1 {
 			mergedMap[k] = v
 		}
-		// Copy or overwrite from map2
+		// Copy or overwrite from map2.
 		for k, v := range map2 {
-			// **Here's a simplified merge strategy: Overwrite on conflict.**
-			// In a real-world scenario, you'd need more sophisticated logic
+			// **Here's a simplified merge strategy: Overwrite on conflict.**.
+			// In a real-world scenario, you'd need more sophisticated logic.
 			// for different condition operators (e.g., merging arrays for ForAllValues).
 			mergedMap[k] = v
 		}
 		return mergedMap
 	}
 
-	// If conditions are not both maps (e.g., they're strings, or different types)
-	// it's difficult to merge them meaningfully without more specific logic.
-	// For this example, we'll prioritize cond1.
-	// You might want to handle this case more carefully, potentially returning an error
-	// or employing a different conflict resolution strategy based on your needs.
 	return cond1
 }

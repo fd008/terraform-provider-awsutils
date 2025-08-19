@@ -83,6 +83,7 @@ func (p *AWSUtilsProvider) Configure(ctx context.Context, req provider.Configure
 func (p *AWSUtilsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCfResource,
+		NewS3UploadResource,
 	}
 }
 
@@ -102,6 +103,7 @@ func (p *AWSUtilsProvider) Functions(ctx context.Context) []func() function.Func
 		NewAwsVarFunction,
 		ShallowListFunction,
 		MergePolicyFunction,
+		FileSetFunction,
 	}
 }
 
