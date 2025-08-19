@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.31.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.18.4
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.49.0
-	github.com/aws/aws-sdk-go-v2/service/kms v1.42.1
+	github.com/aws/aws-sdk-go-v2/service/kms v1.44.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.61.1
