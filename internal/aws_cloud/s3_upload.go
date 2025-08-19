@@ -50,7 +50,10 @@ type UploadStruct struct {
 func init() {
 	// Register custom MIME types for specific file extensions
 	for ext, mimeType := range mimeMap {
-		mime.AddExtensionType(ext, mimeType)
+		err := mime.AddExtensionType(ext, mimeType)
+		if err != nil {
+			log.Printf("Error adding MIME type for extension %s: %v", ext, err)
+		}
 	}
 }
 
@@ -93,7 +96,12 @@ func Upload(param *UploadStruct) {
 	// If additional MIME types are provided, merge them into the mimeMap
 	if param.MimeMap != nil || len(*param.MimeMap) > 0 {
 		for ext, mimeType := range *param.MimeMap {
-			mime.AddExtensionType(ext, mimeType)
+			err := mime.AddExtensionType(ext, mimeType)
+
+			if err != nil {
+				tflog.Error(context.TODO(), fmt.Sprintf("Error adding MIME type for extension %s: %v", ext, err))
+				return
+			}
 		}
 	}
 

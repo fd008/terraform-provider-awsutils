@@ -23,6 +23,7 @@ Upload a directory to S3 bucket efficiently, with support for large files and co
 ### Optional
 
 - `exclusion_list` (List of String) List of file patterns to exclude from upload. Patterns can include wildcards like `*.tmp` or specific file names.
+- `kms_id` (String) KMS Key ID for server-side encryption. If not specified, S3 default encryption is used.
 - `mime_map` (Map of String) Custom MIME types for specific file extensions. This map allows you to
 - `prefix` (String) Optional prefix for the S3 bucket path. If not specified, files will be uploaded to the root of the bucket.
 - `region` (String) AWS Region where the S3 bucket is located. If not specified, defaults to the region configured in the provider.

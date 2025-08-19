@@ -71,7 +71,7 @@ func (p *AWSUtilsProvider) Configure(ctx context.Context, req provider.Configure
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error configuring AWS Utils provider",
-			"Unable to create AWS configuration: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -84,6 +84,7 @@ func (p *AWSUtilsProvider) Resources(ctx context.Context) []func() resource.Reso
 	return []func() resource.Resource{
 		NewCfResource,
 		NewS3UploadResource,
+		NewOpenAPIMergeResource,
 	}
 }
 

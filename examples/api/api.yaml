@@ -1,0 +1,13 @@
+openapi: 3.0.0
+info:
+  title: Example API
+  version: 1.0.0
+  description: Example API with references
+
+paths:
+  /users:
+    $ref: './paths/users.yaml#/users'
+  /users/{id}:
+    $ref: './paths/users.yaml#/users-by-id'
+  /pets:
+    $ref: './paths/pets.yaml#/pets'

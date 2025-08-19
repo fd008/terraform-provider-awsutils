@@ -30,7 +30,7 @@ func (r AwsVarFunction) Metadata(_ context.Context, req function.MetadataRequest
 func (f *AwsVarFunction) Definition(ctx context.Context, req function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Parse an JSON string and replace ssm:: and secret:: references if found",
-		Description: "Given an JSON string, will parse and return the values of ssm and secret references if found",
+		Description: "Given an JSON string, this provider function will parse and return the values of ssm and secret references if found",
 
 		Parameters: []function.Parameter{
 			function.StringParameter{

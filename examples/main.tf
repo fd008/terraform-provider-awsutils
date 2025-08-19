@@ -14,16 +14,21 @@ provider "awsutils" {
 }
 
 
-resource "awsutils_s3_dir_upload" "this" {
-  bucket_name = "mdt-interop-storage"
-  dir_path    = "../docs"
-  # exclusion_list = [
-  #   "*.md"
-  # ]
-  kms_id = "9b2fff53-ebdb-4f2e-ab65-c9edc8763978"
-  prefix  = "test1/"
-  trigger = uuid()
+# resource "awsutils_s3_dir_upload" "this" {
+#   bucket_name = "test-bucket"
+#   dir_path    = "../docs"
+#   # exclusion_list = [
+#   #   "*.md"
+#   # ]
+#   kms_id  = "some-kms-id-1234"
+#   prefix  = "test1/"
+#   trigger = uuid()
 
+# }
+
+resource "awsutils_merge_openapi_yaml" "api" {
+  input_path  = "./api/api.yaml"
+  output_path = "./api/merged.yaml"
 }
 # resource "awsutils_cloudfront_invalidation" "this" {
 #   distribution_id = "ES1234789012"
