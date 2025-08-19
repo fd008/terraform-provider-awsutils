@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -35,6 +36,16 @@ var (
 		".webmanifest": "application/manifest+json",
 	}
 )
+
+type UploadStruct struct {
+	Cfg           aws.Config
+	BucketName    string
+	DirPath       string
+	Prefix        *string
+	KmsID         *string
+	ExclusionList *[]string
+	MimeMap       *map[string]string
+}
 
 func init() {
 	// Register custom MIME types for specific file extensions
@@ -68,20 +79,20 @@ func isExcluded(filePath string, exclusionList []string) bool {
 	return false
 }
 
-func Upload(cfg aws.Config, localPath string, bucket string, prefix *string, exclusionList *[]string, additional_mimes *map[string]string) {
+func Upload(param *UploadStruct) {
 
-	// check if localPath is a directory
-	if info, err := os.Stat(localPath); err != nil {
-		tflog.Error(context.TODO(), fmt.Sprintf("Error stating local path %s: %v", localPath, err))
+	// check if param.DirPath is a directory
+	if info, err := os.Stat(param.DirPath); err != nil {
+		tflog.Error(context.TODO(), fmt.Sprintf("Error stating local path %s: %v", param.DirPath, err))
 		return
 	} else if !info.IsDir() {
-		tflog.Error(context.TODO(), fmt.Sprintf("Local path %s is not a directory", localPath))
+		tflog.Error(context.TODO(), fmt.Sprintf("Local path %s is not a directory", param.DirPath))
 		return
 	}
 
 	// If additional MIME types are provided, merge them into the mimeMap
-	if additional_mimes != nil || len(*additional_mimes) > 0 {
-		for ext, mimeType := range *additional_mimes {
+	if param.MimeMap != nil || len(*param.MimeMap) > 0 {
+		for ext, mimeType := range *param.MimeMap {
 			mime.AddExtensionType(ext, mimeType)
 		}
 	}
@@ -93,12 +104,12 @@ func Upload(cfg aws.Config, localPath string, bucket string, prefix *string, exc
 
 	// Producer: walks the directory and sends file paths to fileChan
 	go func() {
-		err := filepath.WalkDir(localPath, func(path string, d os.DirEntry, err error) error {
+		err := filepath.WalkDir(param.DirPath, func(path string, d os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
 
-			if exclusionList != nil && len(*exclusionList) > 0 && isExcluded(path, *exclusionList) {
+			if param.ExclusionList != nil && len(*param.ExclusionList) > 0 && isExcluded(path, *param.ExclusionList) {
 				log.Printf("Skipping excluded file: %s\n", path)
 				tflog.Info(context.TODO(), fmt.Sprintf("Skipping excluded file: %s", path))
 				return nil
@@ -115,7 +126,7 @@ func Upload(cfg aws.Config, localPath string, bucket string, prefix *string, exc
 		close(fileChan)
 	}()
 
-	uploader := manager.NewUploader(s3.NewFromConfig(cfg), func(u *manager.Uploader) {
+	uploader := manager.NewUploader(s3.NewFromConfig(param.Cfg), func(u *manager.Uploader) {
 		u.PartSize = 5 * 1024 * 1024
 		u.Concurrency = 10
 	})
@@ -125,7 +136,7 @@ func Upload(cfg aws.Config, localPath string, bucket string, prefix *string, exc
 	for i := 0; i < numWorkers; i++ {
 		go func() {
 			for path := range fileChan {
-				rel, err := filepath.Rel(localPath, path)
+				rel, err := filepath.Rel(param.DirPath, path)
 				if err != nil {
 					log.Println("Unable to get relative path:", path, err)
 					continue
@@ -138,15 +149,18 @@ func Upload(cfg aws.Config, localPath string, bucket string, prefix *string, exc
 				key := rel
 
 				// add prefix if provided
-				if prefix != nil || *prefix != "" {
-					key = filepath.Join(*prefix, rel)
+				if param.Prefix != nil || *param.Prefix != "" {
+					key = filepath.Join(*param.Prefix, rel)
 				}
 
 				_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
-					Bucket:      &bucket,
-					Key:         aws.String(key),
-					ContentType: aws.String(getContentType(path)),
-					Body:        file,
+					Bucket:               &param.BucketName,
+					Key:                  aws.String(key),
+					BucketKeyEnabled:     aws.Bool(true),
+					ServerSideEncryption: types.ServerSideEncryptionAwsKms,
+					SSEKMSKeyId:          param.KmsID,
+					ContentType:          aws.String(getContentType(path)),
+					Body:                 file,
 				})
 
 				file.Close()

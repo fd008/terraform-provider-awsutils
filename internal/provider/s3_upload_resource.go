@@ -40,6 +40,7 @@ type S3UploadResource struct {
 type S3UploadResourceModel struct {
 	BucketName    types.String `tfsdk:"bucket_name"`
 	DirPath       types.String `tfsdk:"dir_path"`
+	KmsID         types.String `tfsdk:"kms_id"`
 	ExclusionList types.List   `tfsdk:"exclusion_list"`
 	Trigger       types.String `tfsdk:"trigger"`
 	Region        types.String `tfsdk:"region"`
@@ -66,6 +67,14 @@ func (r *S3UploadResource) Schema(ctx context.Context, req resource.SchemaReques
 			"dir_path": schema.StringAttribute{
 				Required:            true,
 				MarkdownDescription: "Directory path to upload to S3 bucket",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"kms_id": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "KMS Key ID for server-side encryption. If not specified, S3 default encryption is used.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
@@ -202,7 +211,17 @@ func (r *S3UploadResource) Create(ctx context.Context, req resource.CreateReques
 		}
 	}
 
-	awscloud.Upload(cfg, plan.DirPath.ValueString(), plan.BucketName.ValueString(), plan.Prefix.ValueStringPointer(), &exSlice, &mimeMap)
+	uploadInput := awscloud.UploadStruct{
+		Cfg:           cfg,
+		BucketName:    plan.BucketName.ValueString(),
+		DirPath:       plan.DirPath.ValueString(),
+		Prefix:        plan.Prefix.ValueStringPointer(),
+		KmsID:         plan.KmsID.ValueStringPointer(),
+		ExclusionList: &exSlice,
+		MimeMap:       &mimeMap,
+	}
+
+	awscloud.Upload(&uploadInput)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

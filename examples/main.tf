@@ -20,6 +20,7 @@ resource "awsutils_s3_dir_upload" "this" {
   # exclusion_list = [
   #   "*.md"
   # ]
+  kms_id = "9b2fff53-ebdb-4f2e-ab65-c9edc8763978"
   prefix  = "test1/"
   trigger = uuid()
 
@@ -52,9 +53,9 @@ resource "awsutils_s3_dir_upload" "this" {
 #   value = provider::awsutils::sub_data(file("./sub_data.json"), false)
 # }
 
-output "showlist" {
-  value = provider::awsutils::fileset("..", ["*.yml", "*.git"])
-}
+# output "showlist" {
+#   value = provider::awsutils::fileset("..", ["*.yml", "*.git"])
+# }
 
 # output "invalidation" {
 #   value = awsutils_cloudfront_invalidation.this.invalidation_id
