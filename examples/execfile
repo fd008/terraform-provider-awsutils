@@ -1,0 +1,8 @@
+workdir newdir
+copy ../docs/resources resources
+env test 1234 
+run echo "Hello, World!, test is $test"
+run touch test.txt
+sleep 3s
+envfile .env 
+run echo "testing envfile | some_key is $some_key"

@@ -49,23 +49,28 @@ func (f *FileSet) Definition(ctx context.Context, req function.DefinitionRequest
 	}
 }
 
+// resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &path, &exclusionList))
+
 func (f *FileSet) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var path string
 	var exclusionList []string
 
+	// Get arguments
 	resp.Error = req.Arguments.Get(ctx, &path, &exclusionList)
 	if resp.Error != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, 0, &path, &exclusionList))
 		return
 	}
 
+	if len(exclusionList) == 0 {
+		exclusionList = []string{}
+	}
+
+	// Call utility function
 	fileList, err := utils.ConcurrentFileSet(path, exclusionList...)
-
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, 0, &path, &exclusionList))
-
-		return
+		resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &path, &exclusionList))
 	}
 
+	// Always return a list, even if empty
 	resp.Error = resp.Result.Set(ctx, fileList)
 }

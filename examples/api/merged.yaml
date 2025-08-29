@@ -1,3 +1,5 @@
+# Copyright (c) HashiCorp, Inc.
+
 openapi: 3.0.0
 info:
   description: Example API with references

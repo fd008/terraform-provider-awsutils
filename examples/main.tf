@@ -1,4 +1,5 @@
-// Copyright (c) https://github.com/fd008 - All rights reserved
+// Copyright (c) https://github.com/fd008, all rights reserved.
+// SPDX-License-Identifier: MPL-2.0
 
 terraform {
   required_providers {
@@ -26,10 +27,33 @@ provider "awsutils" {
 
 # }
 
-resource "awsutils_merge_openapi_yaml" "api" {
-  input_path  = "./api/api.yaml"
-  output_path = "./api/merged.yaml"
+# resource "awsutils_run_commands" "this" {
+#   exec_file = file("${path.module}/execfile")
+#   trigger   = uuid()
+# }
+
+data "awsutils_execfile" "this" {
+  exec_file = file("${path.module}/execfile")
+  trigger   = uuid()
 }
+
+data "awsutils_external" "this" {
+  program     = ["bash", "${path.module}/test.sh"]
+  working_dir = path.module
+
+  depends_on = [data.awsutils_execfile.this]
+}
+
+output "files" {
+  value = fileset("./newdir", "**")
+
+  depends_on = [data.awsutils_external.this]
+}
+
+# resource "awsutils_merge_openapi_yaml" "api" {
+#   input_path  = "./api/api.yaml"
+#   output_path = "./api/merged.yaml"
+# }
 # resource "awsutils_cloudfront_invalidation" "this" {
 #   distribution_id = "ES1234789012"
 #   paths = [

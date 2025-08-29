@@ -8,7 +8,7 @@ description: |-
 
 # function: sub_data
 
-Given an JSON string, will parse and return the values of ssm and secret references if found
+Given an JSON string, this provider function will parse and return the values of ssm and secret references if found
 
 
 

@@ -85,6 +85,7 @@ func (p *AWSUtilsProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewCfResource,
 		NewS3UploadResource,
 		NewOpenAPIMergeResource,
+		NewRunCommandResource,
 	}
 }
 
@@ -96,6 +97,8 @@ func (p *AWSUtilsProvider) DataSources(ctx context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewKmsPolicyDataSrouce,
 		NewS3PolicyDataSrouce,
+		NewExternalDataSource,
+		NewExecfileDataSource,
 	}
 }
 
