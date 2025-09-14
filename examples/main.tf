@@ -15,7 +15,7 @@ provider "awsutils" {
 }
 
 output "filetree" {
-  value = provider::awsutils::filetree("../examples", 2, ["*.md", "*.go", "*.tf"])
+  value = provider::awsutils::filetree("../examples", 3, ["*.md", "*.go", "*.tf", ".terraform*"])
 }
 
 output "fileset" {

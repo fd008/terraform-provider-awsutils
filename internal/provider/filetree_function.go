@@ -73,7 +73,7 @@ func (f *FileTree) Run(ctx context.Context, req function.RunRequest, resp *funct
 		return
 	}
 
-	mapVal, mapErr := decode(ctx, fileTree)
+	mapVal, mapErr := decodeAny(ctx, fileTree)
 
 	if mapErr != nil {
 		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("Error: %q", mapErr.Errors()))

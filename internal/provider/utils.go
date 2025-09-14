@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func decodeScalar(ctx context.Context, m any) (value attr.Value, diags diag.Diagnostics) {
+func decodeAny(ctx context.Context, m any) (value attr.Value, diags diag.Diagnostics) {
 	switch v := m.(type) {
 	case nil:
 		value = types.DynamicNull()
@@ -24,21 +24,21 @@ func decodeScalar(ctx context.Context, m any) (value attr.Value, diags diag.Diag
 	case string:
 		value = types.StringValue(v)
 	case []any:
-		return decodeSequence(ctx, v)
+		return decodeList(ctx, v)
 	case map[string]any:
-		return decodeMapping(ctx, v)
+		return decodeMap(ctx, v)
 	default:
 		diags.Append(diag.NewErrorDiagnostic("failed to decode", fmt.Sprintf("unexpected type: %T for value %#v", v, v)))
 	}
 	return
 }
 
-func decodeSequence(ctx context.Context, s []any) (attr.Value, diag.Diagnostics) {
+func decodeList(ctx context.Context, s []any) (attr.Value, diag.Diagnostics) {
 	vl := make([]attr.Value, len(s))
 	tl := make([]attr.Type, len(s))
 
 	for i, v := range s {
-		vv, diags := decodeScalar(ctx, v)
+		vv, diags := decodeAny(ctx, v)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -49,12 +49,12 @@ func decodeSequence(ctx context.Context, s []any) (attr.Value, diag.Diagnostics)
 	return types.TupleValue(tl, vl)
 }
 
-func decodeMapping(ctx context.Context, m map[string]any) (attr.Value, diag.Diagnostics) {
+func decodeMap(ctx context.Context, m map[string]any) (attr.Value, diag.Diagnostics) {
 	vm := make(map[string]attr.Value, len(m))
 	tm := make(map[string]attr.Type, len(m))
 
 	for k, v := range m {
-		vv, diags := decodeScalar(ctx, v)
+		vv, diags := decodeAny(ctx, v)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -65,19 +65,21 @@ func decodeMapping(ctx context.Context, m map[string]any) (attr.Value, diag.Diag
 	return types.ObjectValue(tm, vm)
 }
 
-func decode(ctx context.Context, data any) (v types.Tuple, diags diag.Diagnostics) {
+func decode(ctx context.Context, data any) (v attr.Value, diags diag.Diagnostics) {
 
-	dtypes := []attr.Type{}
-	dvalues := []attr.Value{}
-	diags = diag.Diagnostics{}
+	// dtypes := []attr.Type{}
+	// dvalues := []attr.Value{}
+	// diags = diag.Diagnostics{}
 
-	obj, d := decodeScalar(ctx, data)
+	obj, d := decodeAny(ctx, data)
 	diags.Append(d...)
 	if diags.HasError() {
 		return
 	}
-	dtypes = append(dtypes, obj.Type(ctx))
-	dvalues = append(dvalues, obj)
+	// dtypes = append(dtypes, obj.Type(ctx))
+	// dvalues = append(dvalues, obj)
 
-	return types.TupleValue(dtypes, dvalues)
+	// return types.TupleValue(dtypes, dvalues)
+
+	return obj, d
 }
