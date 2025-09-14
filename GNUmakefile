@@ -30,7 +30,7 @@ local:
 .PHONY: fmt lint test testacc build install generate
 
 gitpush:
-	git add .; git commit -m "$(MSG)"; git push
+	make generate; git add .; git commit -m "$(MSG)"; git push
 
 gittag:
 	git tag -a v${VERSION} -m "version ${VERSION}"; git push origin v${VERSION}
