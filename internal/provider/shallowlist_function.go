@@ -35,6 +35,12 @@ func (f *ShallowList) Definition(ctx context.Context, req function.DefinitionReq
 				Name:        "path",
 				Description: "A Directory Path",
 			},
+			function.BoolParameter{
+				Name:               "dir_only",
+				Description:        "If true, will return only directories. Defaults to false.",
+				AllowNullValue:     true,
+				AllowUnknownValues: true,
+			},
 		},
 		Return: function.ListReturn{
 			ElementType: types.StringType,
@@ -42,7 +48,7 @@ func (f *ShallowList) Definition(ctx context.Context, req function.DefinitionReq
 	}
 }
 
-func ListDirectoryContents(path string) []string {
+func ListDirectoryContents(path string, dironly bool) []string {
 	entries, err := os.ReadDir(path) // Read directory entries
 	if err != nil {
 		return []string{} // Return an empty list if there's an error
@@ -50,16 +56,25 @@ func ListDirectoryContents(path string) []string {
 
 	var contents []string
 	for _, entry := range entries {
-		contents = append(contents, entry.Name())
+
+		if dironly && entry.IsDir() {
+			contents = append(contents, entry.Name())
+		}
+
+		if !dironly {
+			contents = append(contents, entry.Name())
+		}
+
 	}
 	return contents
 }
 
 func (f *ShallowList) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var path string
+	var dironly bool
 
-	resp.Error = req.Arguments.Get(ctx, &path)
-	fileList := ListDirectoryContents(path)
+	resp.Error = req.Arguments.Get(ctx, &path, &dironly)
+	fileList := ListDirectoryContents(path, dironly)
 
 	resp.Error = resp.Result.Set(ctx, fileList)
 }

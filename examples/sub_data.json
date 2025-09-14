@@ -3,7 +3,7 @@
     "nested": {
         "key": {
             "other": {
-                "stuff": "ssm::/dh/cf/info",
+                "stuff": "ssm::/project/cf/info",
                 "new": "ssm::/org/member/local_sns_arn::eu-central-1"
             }
         }

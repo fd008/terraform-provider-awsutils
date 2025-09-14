@@ -32,7 +32,7 @@ func (f *FileSet) Definition(ctx context.Context, req function.DefinitionRequest
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "path",
-				Description: "A Directory Path",
+				Description: "The Directory Path from which to start the file set query",
 			},
 			function.ListParameter{
 				Name:                "exclusion_list",

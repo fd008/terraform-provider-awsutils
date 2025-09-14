@@ -1,4 +1,4 @@
-// Copyright github.com/fd008 - All rights reserved
+// Copyright (c) https://github.com/fd008, all rights reserved.
 // SPDX-License-Identifier: MPL-2.0
 
 package provider
@@ -108,6 +108,7 @@ func (p *AWSUtilsProvider) Functions(ctx context.Context) []func() function.Func
 		ShallowListFunction,
 		MergePolicyFunction,
 		FileSetFunction,
+		FileTreeFunction,
 	}
 }
 

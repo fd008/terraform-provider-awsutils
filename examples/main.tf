@@ -5,7 +5,7 @@ terraform {
   required_providers {
     awsutils = {
       source  = "fd008/awsutils"
-      version = ">= 1.5.0"
+      version = ">= 1.7.0"
     }
   }
 }
@@ -14,6 +14,18 @@ provider "awsutils" {
   # region = "us-east-1"
 }
 
+output "filetree" {
+  value = provider::awsutils::filetree("../examples", 2, ["*.md", "*.go", "*.tf"])
+}
+
+output "fileset" {
+  value = provider::awsutils::fileset("../examples", ["*.yml", "*.git"])
+}
+
+output "shallowlist" {
+  value = provider::awsutils::shallow_list("../examples", true)
+
+}
 
 # resource "awsutils_s3_dir_upload" "this" {
 #   bucket_name = "test-bucket"
@@ -32,23 +44,23 @@ provider "awsutils" {
 #   trigger   = uuid()
 # }
 
-data "awsutils_execfile" "this" {
-  exec_file = file("${path.module}/execfile")
-  trigger   = uuid()
-}
+# data "awsutils_execfile" "this" {
+#   exec_file = file("${path.module}/execfile")
+#   trigger   = uuid()
+# }
 
-data "awsutils_external" "this" {
-  program     = ["bash", "${path.module}/test.sh"]
-  working_dir = path.module
+# data "awsutils_external" "this" {
+#   program     = ["bash", "${path.module}/test.sh"]
+#   working_dir = path.module
 
-  depends_on = [data.awsutils_execfile.this]
-}
+#   depends_on = [data.awsutils_execfile.this]
+# }
 
-output "files" {
-  value = fileset("./newdir", "**")
+# output "files" {
+#   value = fileset("./newdir", "**")
 
-  depends_on = [data.awsutils_external.this]
-}
+#   depends_on = [data.awsutils_external.this]
+# }
 
 # resource "awsutils_merge_openapi_yaml" "api" {
 #   input_path  = "./api/api.yaml"
@@ -82,9 +94,6 @@ output "files" {
 #   value = provider::awsutils::sub_data(file("./sub_data.json"), false)
 # }
 
-# output "showlist" {
-#   value = provider::awsutils::fileset("..", ["*.yml", "*.git"])
-# }
 
 # output "invalidation" {
 #   value = awsutils_cloudfront_invalidation.this.invalidation_id
