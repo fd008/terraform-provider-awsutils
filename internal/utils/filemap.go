@@ -74,12 +74,12 @@ func buildMap(dirPath string, depth int, patternMatchers []func(string) bool, cu
 					return err
 				}
 			} else {
-				// If depth limit is reached, just add the directory name
-				currentMap[entry.Name()] = nil // A simple placeholder
+				// If depth limit is reached, just add the directory name as an empty object
+				currentMap[entry.Name()] = make(map[string]interface{})
 			}
 		} else {
 			// Handle file entries
-			currentMap[entry.Name()] = nil // Represent a file with a placeholder
+			currentMap[entry.Name()] = make(map[string]interface{})
 		}
 	}
 	return nil
