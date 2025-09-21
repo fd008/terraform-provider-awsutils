@@ -34,3 +34,6 @@ gitpush:
 
 gittag:
 	git tag -a v${VERSION} -m "version ${VERSION}"; git push origin v${VERSION}
+
+gtd: 
+	git tag -d v${VERSION}; git push --delete origin v${VERSION}
