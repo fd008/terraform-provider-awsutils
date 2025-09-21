@@ -99,6 +99,7 @@ func (p *AWSUtilsProvider) DataSources(ctx context.Context) []func() datasource.
 		NewS3PolicyDataSrouce,
 		NewExternalDataSource,
 		NewExecfileDataSource,
+		NewRdsDataExecute,
 	}
 }
 

@@ -25,7 +25,7 @@ testacc:
 	TF_ACC=1 go test -v -cover -timeout 120m ./...
 
 local: 
-	make install; cd examples; terraform init; terraform plan; terraform apply --auto-approve; cd -
+	make install; cd examples; terraform init; terraform plan; TF_LOG=debug terraform apply --auto-approve; cd -
 
 .PHONY: fmt lint test testacc build install generate
 

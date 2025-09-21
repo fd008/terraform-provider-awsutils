@@ -15,14 +15,14 @@ import (
 
 func decodeAny(ctx context.Context, m any) (value attr.Value, diags diag.Diagnostics) {
 	switch v := m.(type) {
+	case string:
+		value = types.StringValue(v)
 	case nil:
 		value = types.DynamicNull()
 	case float64:
 		value = types.NumberValue(big.NewFloat(float64(v)))
 	case bool:
 		value = types.BoolValue(v)
-	case string:
-		value = types.StringValue(v)
 	case []any:
 		return decodeList(ctx, v)
 	case map[string]any:
@@ -34,52 +34,105 @@ func decodeAny(ctx context.Context, m any) (value attr.Value, diags diag.Diagnos
 }
 
 func decodeList(ctx context.Context, s []any) (attr.Value, diag.Diagnostics) {
-	vl := make([]attr.Value, len(s))
-	tl := make([]attr.Type, len(s))
+	lv := make([]attr.Value, len(s))
+	lt := make([]attr.Type, len(s))
 
 	for i, v := range s {
 		vv, diags := decodeAny(ctx, v)
 		if diags.HasError() {
 			return nil, diags
 		}
-		vl[i] = vv
-		tl[i] = vv.Type(ctx)
+		lv[i] = vv
+		lt[i] = vv.Type(ctx)
 	}
 
-	return types.TupleValue(tl, vl)
+	return types.TupleValue(lt, lv)
 }
 
 func decodeMap(ctx context.Context, m map[string]any) (attr.Value, diag.Diagnostics) {
-	vm := make(map[string]attr.Value, len(m))
-	tm := make(map[string]attr.Type, len(m))
+	mv := make(map[string]attr.Value, len(m))
+	mt := make(map[string]attr.Type, len(m))
 
 	for k, v := range m {
 		vv, diags := decodeAny(ctx, v)
 		if diags.HasError() {
 			return nil, diags
 		}
-		vm[k] = vv
-		tm[k] = vv.Type(ctx)
+		mv[k] = vv
+		mt[k] = vv.Type(ctx)
 	}
 
-	return types.ObjectValue(tm, vm)
+	return types.ObjectValue(mt, mv)
 }
 
-func decode(ctx context.Context, data any) (v attr.Value, diags diag.Diagnostics) {
-
-	// dtypes := []attr.Type{}
-	// dvalues := []attr.Value{}
-	// diags = diag.Diagnostics{}
-
-	obj, d := decodeAny(ctx, data)
-	diags.Append(d...)
-	if diags.HasError() {
-		return
+func dynamicToGoType(d types.Dynamic) (any, error) {
+	if d.IsNull() || d.IsUnknown() {
+		return nil, nil
 	}
-	// dtypes = append(dtypes, obj.Type(ctx))
-	// dvalues = append(dvalues, obj)
+	uv := d.UnderlyingValue()
 
-	// return types.TupleValue(dtypes, dvalues)
+	switch v := uv.(type) {
+	case types.String:
+		return v.ValueString(), nil
+	case types.Number:
+		f, _ := v.ValueBigFloat().Float64()
+		return f, nil
+	case types.Bool:
+		return v.ValueBool(), nil
+	case types.Tuple:
+		var list []any
+		for _, e := range v.Elements() {
+			ev, err := dynamicToGoType(e.(types.Dynamic))
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, ev)
+		}
+		return list, nil
+	case types.Object:
+		m := make(map[string]any)
+		for k, e := range v.Attributes() {
+			ev, err := dynamicToGoType(e.(types.Dynamic))
+			if err != nil {
+				return nil, err
+			}
+			m[k] = ev
+		}
+		return m, nil
+	case types.Map:
+		m := make(map[string]any)
+		for k, e := range v.Elements() {
+			ev, err := dynamicToGoType(e.(types.Dynamic))
+			if err != nil {
+				return nil, err
+			}
+			m[k] = ev
+		}
+		return m, nil
+	case types.List:
+		var list []any
+		for _, e := range v.Elements() {
+			ev, err := dynamicToGoType(e.(types.Dynamic))
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, ev)
+		}
+		return list, nil
+	case types.Dynamic:
+		return dynamicToGoType(v)
+	case types.Set:
+		var list []any
+		for _, e := range v.Elements() {
+			ev, err := dynamicToGoType(e.(types.Dynamic))
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, ev)
+		}
+		return list, nil
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", v)
+	}
 
-	return obj, d
 }
