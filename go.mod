@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/rdsdata v1.32.4
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.39.5
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.61.1
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.65.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.37.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
