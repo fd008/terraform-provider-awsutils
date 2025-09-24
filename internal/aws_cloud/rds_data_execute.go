@@ -6,10 +6,10 @@ package awscloud
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/service/rdsdata"
 	"github.com/aws/aws-sdk-go-v2/service/rdsdata/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type ExecuteModel struct {
@@ -17,36 +17,90 @@ type ExecuteModel struct {
 	SecretArn             string
 	Database              string
 	SQL                   string
-	Parameters            *map[string]ParameterModel
+	Parameters            []types.SqlParameter
 	Region                *string
 	ContinueAfterTimeout  bool
 	IncludeResultMetadata bool
 }
 
-func (e *ExecuteModel) toInput() (*rdsdata.ExecuteStatementInput, error) {
-	var input rdsdata.ExecuteStatementInput
+func (e *ExecuteModel) ToParams(params map[string]ParameterModel) ([]types.SqlParameter, error) {
+	var sqlParams []types.SqlParameter
 
-	input.ResourceArn = &e.ResourceArn
-	input.SecretArn = &e.SecretArn
-	input.Database = &e.Database
-	input.Sql = &e.SQL
-	input.ContinueAfterTimeout = e.ContinueAfterTimeout || true
-	input.IncludeResultMetadata = e.IncludeResultMetadata || true
-
-	tflog.Debug(context.TODO(), fmt.Sprintf("Parameters: %+v", input.Parameters))
-
-	if e.Parameters != nil {
-		params, err := toParams(e.Parameters)
-		if err != nil {
-			return nil, err
+	for name, param := range params {
+		switch param.Type {
+		case "string":
+			sqlParams = append(sqlParams, types.SqlParameter{
+				Name:  &name,
+				Value: &types.FieldMemberStringValue{Value: param.Value},
+			})
+		case "long":
+			longValue, err := strconv.ParseInt(param.Value, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid long value for parameter %s: %w", name, err)
+			}
+			sqlParams = append(sqlParams, types.SqlParameter{
+				Name:  &name,
+				Value: &types.FieldMemberLongValue{Value: longValue},
+			})
+		case "double":
+			doubleValue, err := strconv.ParseFloat(param.Value, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid double value for parameter %s: %w", name, err)
+			}
+			sqlParams = append(sqlParams, types.SqlParameter{
+				Name:  &name,
+				Value: &types.FieldMemberDoubleValue{Value: doubleValue},
+			})
+		case "boolean":
+			boolValue, err := strconv.ParseBool(param.Value)
+			if err != nil {
+				return nil, fmt.Errorf("invalid boolean value for parameter %s: %w", name, err)
+			}
+			sqlParams = append(sqlParams, types.SqlParameter{
+				Name:  &name,
+				Value: &types.FieldMemberBooleanValue{Value: boolValue},
+			})
+		case "json":
+			sqlParams = append(sqlParams, types.SqlParameter{
+				Name:  &name,
+				Value: &types.FieldMemberStringValue{Value: param.Value},
+			})
+		case "blob":
+			sqlParams = append(sqlParams, types.SqlParameter{
+				Name:  &name,
+				Value: &types.FieldMemberBlobValue{Value: []byte(param.Value)},
+			})
+		default:
+			return nil, fmt.Errorf("unsupported parameter type %s for parameter %s", param.Type, name)
 		}
-		input.Parameters = params
 	}
-
-	input.FormatRecordsAs = types.RecordsFormatTypeJson
-
-	return &input, nil
+	return sqlParams, nil
 }
+
+// func (e *ExecuteModel) toInput() (*rdsdata.ExecuteStatementInput, error) {
+// 	var input rdsdata.ExecuteStatementInput
+
+// 	input.ResourceArn = &e.ResourceArn
+// 	input.SecretArn = &e.SecretArn
+// 	input.Database = &e.Database
+// 	input.Sql = &e.SQL
+// 	input.ContinueAfterTimeout = e.ContinueAfterTimeout || true
+// 	input.IncludeResultMetadata = e.IncludeResultMetadata || true
+
+// 	tflog.Debug(context.TODO(), fmt.Sprintf("Parameters: %+v", input.Parameters))
+
+// 	if e.Parameters != nil {
+// 		params, err := toParams(e.Parameters)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		input.Parameters = params
+// 	}
+
+// 	input.FormatRecordsAs = types.RecordsFormatTypeJson
+
+// 	return &input, nil
+// }
 
 func (e *ExecuteModel) ExecuteStatement() (string, error) {
 	cfg, err := GetConfig(e.Region, nil, nil)
@@ -56,13 +110,23 @@ func (e *ExecuteModel) ExecuteStatement() (string, error) {
 
 	// Create a new RDS Data Service client
 	client := rdsdata.NewFromConfig(cfg)
-	input, err := e.toInput()
+
+	var input rdsdata.ExecuteStatementInput
+
+	input.ResourceArn = &e.ResourceArn
+	input.SecretArn = &e.SecretArn
+	input.Database = &e.Database
+	input.Sql = &e.SQL
+	input.ContinueAfterTimeout = e.ContinueAfterTimeout || true
+	input.IncludeResultMetadata = e.IncludeResultMetadata || true
+	input.Parameters = e.Parameters
+
 	if err != nil {
 		return "", err
 	}
 
 	// Call the ExecuteStatement operation
-	resp, err := client.ExecuteStatement(context.TODO(), input)
+	resp, err := client.ExecuteStatement(context.TODO(), &input)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute SQL statement: %w", err)
 	}

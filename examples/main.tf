@@ -27,23 +27,23 @@ output "shallowlist" {
 
 }
 
-data "awsutils_rds_data_execute_statement" "this" {
-  resource_arn = "arn:aws:rds:us-east-1:123434:cluster:cluster..."
-  secret_arn   = "arn:aws:secretsmanager:us-east-1:123434:secret:.."
-  database     = "postgres"
-  sql          = "SELECT * FROM schema.table where pk = :pk"
-  region       = "us-east-1"
-  parameters = {
-    pk = {
-      value = 4
-      type  = "long"
-    }
-  }
-}
+# data "awsutils_rds_data_execute_statement" "this" {
+#   resource_arn = "arn:aws:rds:us-east-1:123434:cluster:cluster..."
+#   secret_arn   = "arn:aws:secretsmanager:us-east-1:123434:secret:.."
+#   database     = "postgres"
+#   sql          = "SELECT * FROM schema.table where pk = :pk"
+#   region       = "us-east-1"
+#   parameters = {
+#     pk = {
+#       value = 4
+#       type  = "long"
+#     }
+#   }
+# }
 
-output "this" {
-  value = data.awsutils_rds_data_execute_statement.this.result
-}
+# output "this" {
+#   value = data.awsutils_rds_data_execute_statement.this.result
+# }
 
 # resource "awsutils_s3_dir_upload" "this" {
 #   bucket_name = "test-bucket"

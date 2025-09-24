@@ -114,8 +114,10 @@ func (d *RdsDataExecute) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	tflog.Debug(ctx, "params: "+state.Parameters.String())
 
+	var params = make(map[string]awscloud.ParameterModel, len(state.Parameters.Elements()))
+
 	if !state.Parameters.IsNull() && !state.Parameters.IsUnknown() {
-		params := make(map[string]awscloud.ParameterModel, len(state.Parameters.Elements()))
+
 		for k, v := range state.Parameters.Elements() {
 			obj := v.(types.Object).Attributes()
 
@@ -124,9 +126,19 @@ func (d *RdsDataExecute) Read(ctx context.Context, req datasource.ReadRequest, r
 				Value: obj["value"].(types.String).ValueString(),
 			}
 		}
-
-		exec.Parameters = &params
 	}
+
+	sqlParams, err := exec.ToParams(params)
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error converting parameters",
+			err.Error(),
+		)
+		return
+	}
+
+	exec.Parameters = sqlParams
 
 	result, err := exec.ExecuteStatement()
 	if err != nil {

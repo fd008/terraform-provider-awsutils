@@ -16,31 +16,8 @@ type ExecuteBatchModel struct {
 	SecretArn   string
 	Database    string
 	SQL         string
-	Parameters  *[]map[string]ParameterModel
+	Parameters  [][]types.SqlParameter
 	Region      *string
-}
-
-func (e *ExecuteBatchModel) toInput() (*rdsdata.BatchExecuteStatementInput, error) {
-	var input rdsdata.BatchExecuteStatementInput
-
-	input.ResourceArn = &e.ResourceArn
-	input.SecretArn = &e.SecretArn
-	input.Database = &e.Database
-	input.Sql = &e.SQL
-
-	if e.Parameters != nil {
-		paramsList := make([][]types.SqlParameter, 0, len(*e.Parameters))
-		for _, paramMap := range *e.Parameters {
-			params, err := toParams(&paramMap)
-			if err != nil {
-				return nil, err
-			}
-			paramsList = append(paramsList, params)
-		}
-		input.ParameterSets = paramsList
-	}
-
-	return &input, nil
 }
 
 func (e *ExecuteBatchModel) ExecuteBatchStatement() (string, error) {
