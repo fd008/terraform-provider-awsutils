@@ -77,33 +77,9 @@ func (e *ExecuteModel) ToParams(params map[string]ParameterModel) ([]types.SqlPa
 	return sqlParams, nil
 }
 
-// func (e *ExecuteModel) toInput() (*rdsdata.ExecuteStatementInput, error) {
-// 	var input rdsdata.ExecuteStatementInput
-
-// 	input.ResourceArn = &e.ResourceArn
-// 	input.SecretArn = &e.SecretArn
-// 	input.Database = &e.Database
-// 	input.Sql = &e.SQL
-// 	input.ContinueAfterTimeout = e.ContinueAfterTimeout || true
-// 	input.IncludeResultMetadata = e.IncludeResultMetadata || true
-
-// 	tflog.Debug(context.TODO(), fmt.Sprintf("Parameters: %+v", input.Parameters))
-
-// 	if e.Parameters != nil {
-// 		params, err := toParams(e.Parameters)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		input.Parameters = params
-// 	}
-
-// 	input.FormatRecordsAs = types.RecordsFormatTypeJson
-
-// 	return &input, nil
-// }
-
 func (e *ExecuteModel) ExecuteStatement() (string, error) {
 	cfg, err := GetConfig(e.Region, nil, nil)
+
 	if err != nil {
 		return "", err
 	}
@@ -120,10 +96,6 @@ func (e *ExecuteModel) ExecuteStatement() (string, error) {
 	input.ContinueAfterTimeout = e.ContinueAfterTimeout || true
 	input.IncludeResultMetadata = e.IncludeResultMetadata || true
 	input.Parameters = e.Parameters
-
-	if err != nil {
-		return "", err
-	}
 
 	// Call the ExecuteStatement operation
 	resp, err := client.ExecuteStatement(context.TODO(), &input)
