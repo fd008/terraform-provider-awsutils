@@ -5,9 +5,6 @@ package awscloud
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-
-	"github.com/aws/aws-sdk-go-v2/service/rdsdata/types"
 )
 
 type ParameterModel struct {
@@ -15,73 +12,73 @@ type ParameterModel struct {
 	Type  string
 }
 
-func toParams(params *map[string]ParameterModel) ([]types.SqlParameter, error) {
-	if params == nil {
-		return nil, nil
-	}
+// func toParams(params *map[string]ParameterModel) ([]types.SqlParameter, error) {
+// 	if params == nil {
+// 		return nil, nil
+// 	}
 
-	var sqlParams []types.SqlParameter
-	for name, param := range *params {
+// 	var sqlParams []types.SqlParameter
+// 	for name, param := range *params {
 
-		switch param.Type {
-		case "string":
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberStringValue{Value: param.Value},
-			})
-		case "long":
-			longValue, err := strconv.ParseInt(param.Value, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid long value for parameter %s: %w", name, err)
-			}
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberLongValue{Value: longValue},
-			})
-		case "double":
-			doubleValue, err := strconv.ParseFloat(param.Value, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid double value for parameter %s: %w", name, err)
-			}
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberDoubleValue{Value: doubleValue},
-			})
-		case "boolean":
-			boolValue, err := strconv.ParseBool(param.Value)
-			if err != nil {
-				return nil, fmt.Errorf("invalid boolean value for parameter %s: %w", name, err)
-			}
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberBooleanValue{Value: boolValue},
-			})
-		case "json":
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberStringValue{Value: param.Value},
-			})
-		case "blob":
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberBlobValue{Value: []byte(param.Value)},
-			})
-		case "null":
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberIsNull{Value: true},
-			})
-		default:
-			sqlParams = append(sqlParams, types.SqlParameter{
-				Name:  &name,
-				Value: &types.FieldMemberStringValue{Value: param.Value},
-			})
-		}
-	}
+// 		switch param.Type {
+// 		case "string":
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberStringValue{Value: param.Value},
+// 			})
+// 		case "long":
+// 			longValue, err := strconv.ParseInt(param.Value, 10, 64)
+// 			if err != nil {
+// 				return nil, fmt.Errorf("invalid long value for parameter %s: %w", name, err)
+// 			}
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberLongValue{Value: longValue},
+// 			})
+// 		case "double":
+// 			doubleValue, err := strconv.ParseFloat(param.Value, 64)
+// 			if err != nil {
+// 				return nil, fmt.Errorf("invalid double value for parameter %s: %w", name, err)
+// 			}
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberDoubleValue{Value: doubleValue},
+// 			})
+// 		case "boolean":
+// 			boolValue, err := strconv.ParseBool(param.Value)
+// 			if err != nil {
+// 				return nil, fmt.Errorf("invalid boolean value for parameter %s: %w", name, err)
+// 			}
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberBooleanValue{Value: boolValue},
+// 			})
+// 		case "json":
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberStringValue{Value: param.Value},
+// 			})
+// 		case "blob":
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberBlobValue{Value: []byte(param.Value)},
+// 			})
+// 		case "null":
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberIsNull{Value: true},
+// 			})
+// 		default:
+// 			sqlParams = append(sqlParams, types.SqlParameter{
+// 				Name:  &name,
+// 				Value: &types.FieldMemberStringValue{Value: param.Value},
+// 			})
+// 		}
+// 	}
 
-	return sqlParams, nil
+// 	return sqlParams, nil
 
-}
+// }
 
 func ToJson(data *string) ([]byte, error) {
 	var records []map[string]any
