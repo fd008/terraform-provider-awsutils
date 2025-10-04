@@ -40,9 +40,9 @@ func NewUlang(ctx context.Context, cmdString, workDir string) *ULang {
 		tflog.Info(ctx, "Error getting current directory:"+err.Error())
 	}
 
-	if workDir == "" {
-		workDir = dir
-	}
+	// if workDir == "" {
+	// 	workDir = dir
+	// }
 
 	return &ULang{
 		CmdString: cmdString,
@@ -59,7 +59,7 @@ func (s *ULang) ParseCommands() ([]Command, error) {
 	scanner := bufio.NewScanner(strings.NewReader(s.CmdString))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
 			continue // Skip empty lines and comments
 		}
 
@@ -80,6 +80,29 @@ func (s *ULang) ParseCommands() ([]Command, error) {
 	}
 
 	return commands, nil
+}
+
+func (s *ULang) toAbsPath(dir string) string {
+	if dir != "" && !filepath.IsAbs(dir) {
+		absPath, err := filepath.Abs(dir)
+		if err != nil {
+			tflog.Info(s.Ctx, "Error getting absolute path of working directory:"+err.Error())
+			return dir
+		}
+		return absPath
+	}
+	return dir
+}
+
+func (s *ULang) getCurDir() string {
+	dir, err := os.Getwd()
+
+	if err != nil {
+		tflog.Info(s.Ctx, "Error getting current directory:"+err.Error())
+		return ""
+	}
+
+	return s.toAbsPath(dir)
 }
 
 // runCommand executes a single command in the interpreter's state.
@@ -107,7 +130,7 @@ func (s *ULang) loadEnv(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ENVFILE requires exactly one argument like this - ENVFILE <path>")
 	}
-	envfile := args[0]
+	envfile := s.toAbsPath(args[0])
 
 	file, err := os.Open(path.Join(s.CurDir, envfile))
 	if err != nil {
@@ -151,10 +174,10 @@ func (s *ULang) setWorkDir(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("workdir requires exactly one argument like this - workdir <path>")
 	}
-	targetDir := args[0]
+	targetDir := s.toAbsPath(args[0])
 
 	absPath := targetDir
-	if !filepath.IsAbs(targetDir) {
+	if s.WorkDir != "" {
 		absPath = filepath.Join(s.WorkDir, targetDir)
 	}
 
@@ -181,8 +204,13 @@ func (s *ULang) copyFile(args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("COPY requires two arguments (source, destination)")
 	}
-	srcPath := filepath.Join(s.CurDir, args[0])
-	destPath := filepath.Join(s.WorkDir, args[1])
+	srcPath := s.toAbsPath(args[0])
+	destPath := s.toAbsPath(args[1])
+
+	// source path is relative to current directory not working directory, but destination is relative to working directory
+	if s.WorkDir != "" {
+		destPath = filepath.Join(s.WorkDir, destPath)
+	}
 
 	tflog.Info(s.Ctx, fmt.Sprintf("Copying file from %s to %s\n", srcPath, destPath))
 
@@ -310,7 +338,7 @@ func (s *ULang) runExternalCommand(args []string) error {
 		}
 	}
 
-	cmd.Dir = s.WorkDir
+	cmd.Dir = s.getCurDir()
 	cmd.Env = buildEnvSlice(s.Env)
 
 	var stderr strings.Builder
