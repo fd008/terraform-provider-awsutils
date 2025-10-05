@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -39,10 +38,6 @@ func NewUlang(ctx context.Context, cmdString, workDir string) *ULang {
 	if err != nil {
 		tflog.Info(ctx, "Error getting current directory:"+err.Error())
 	}
-
-	// if workDir == "" {
-	// 	workDir = dir
-	// }
 
 	return &ULang{
 		CmdString: cmdString,
@@ -113,7 +108,7 @@ func (s *ULang) RunCommand(cmd Command) error {
 	case "RUN":
 		return s.runExternalCommand(cmd.Args)
 	case "COPY":
-		return s.copyFile(cmd.Args)
+		return s.copy(cmd.Args)
 	case "ENV":
 		return s.setEnv(cmd.Args)
 	case "SLEEP":
@@ -132,7 +127,7 @@ func (s *ULang) loadEnv(args []string) error {
 	}
 	envfile := s.toAbsPath(args[0])
 
-	file, err := os.Open(path.Join(s.CurDir, envfile))
+	file, err := os.Open(envfile)
 	if err != nil {
 		return err
 	}
@@ -177,6 +172,7 @@ func (s *ULang) setWorkDir(args []string) error {
 	targetDir := s.toAbsPath(args[0])
 
 	absPath := targetDir
+
 	if s.WorkDir != "" {
 		absPath = filepath.Join(s.WorkDir, targetDir)
 	}
@@ -199,22 +195,93 @@ func (s *ULang) setWorkDir(args []string) error {
 	return nil
 }
 
-// copyFile copies a file from source to destination.
-func (s *ULang) copyFile(args []string) error {
+func checkPathType(path string) map[string]bool {
+	res := map[string]bool{
+		"exists": false,
+		"file":   false,
+		"dir":    false,
+	}
+
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("Path \"%s\" does not exist.\n", path)
+		} else {
+			fmt.Printf("Error checking path \"%s\": %v\n", path, err)
+		}
+		return res
+	}
+
+	if fileInfo.IsDir() {
+		fmt.Printf("Path \"%s\" is a directory.\n", path)
+		res["dir"] = true
+		res["exists"] = true
+		return res
+	} else if fileInfo.Mode().IsRegular() {
+		fmt.Printf("Path \"%s\" is a regular file.\n", path)
+		res["file"] = true
+		res["exists"] = true
+		return res
+	} else {
+		fmt.Printf("Path \"%s\" is neither a regular file nor a directory (e.g., a symbolic link, device file, etc.).\n", path)
+
+		return res
+	}
+}
+
+func (s *ULang) copy(args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("COPY requires two arguments (source, destination)")
 	}
 	srcPath := s.toAbsPath(args[0])
 	destPath := s.toAbsPath(args[1])
 
-	// source path is relative to current directory not working directory, but destination is relative to working directory
-	if s.WorkDir != "" {
-		destPath = filepath.Join(s.WorkDir, destPath)
+	srcRes := checkPathType(srcPath)
+	desRes := checkPathType(destPath)
+
+	if !srcRes["exists"] {
+		return fmt.Errorf("source path does not exist: %s", srcPath)
 	}
 
-	tflog.Info(s.Ctx, fmt.Sprintf("Copying file from %s to %s\n", srcPath, destPath))
+	if !srcRes["file"] && !srcRes["dir"] {
+		return fmt.Errorf("source path is neither a file nor a directory: %s", srcPath)
+	}
 
-	return copyDir(srcPath, destPath)
+	if !desRes["exists"] {
+		// destination does not exist, create it
+		if srcRes["file"] {
+			// create parent directory for file
+			parentDir := filepath.Dir(destPath)
+			err := os.MkdirAll(parentDir, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to create parent directory for destination file: %w", err)
+			}
+			// copy file
+			err = s.copyFile(srcPath, destPath)
+			if err != nil {
+				return fmt.Errorf("failed to copy file: %w", err)
+			}
+		} else if srcRes["dir"] {
+			// create directory
+			err := os.MkdirAll(destPath, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to create destination directory: %w", err)
+			}
+			// copy directory recursively
+			err = copyDir(srcPath, destPath)
+			if err != nil {
+				return fmt.Errorf("failed to copy directory: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+// copyFile copies a file from source to destination.
+func (s *ULang) copyFile(src, dest string) error {
+	tflog.Info(s.Ctx, fmt.Sprintf("Copying file from %s to %s\n", src, dest))
+	return copy(src, dest)
+
 }
 
 // copyDir recursively copies a directory from src to dest.
